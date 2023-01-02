@@ -198,7 +198,8 @@ struct NumParser {
     if (max_decimals && num_end < end && *num_end == '.') {
       ++num_end;
 
-      while(num_end < end && !strchr("*)", *num_end) && max_decimals--) {
+      while(num_end < end && !strchr("*)", *num_end) && max_decimals) {
+        --max_decimals;
         if (*num_end < '0' || *num_end > '9')
           return res.fail((const __FlashStringHelper*)INVALID_NUMBER, num_end);
         value *= 10;
@@ -211,14 +212,18 @@ struct NumParser {
     while(max_decimals--)
       value *= 10;
 
+    // If a unit was passed, check that the unit in the messages
+    // messages the unit passed.
     if (unit && *unit) {
       if (num_end >= end || *num_end != '*')
         return res.fail(F("Missing unit"), num_end);
       const char *unit_start = ++num_end; // skip *
       while(num_end < end && *num_end != ')' && *unit) {
+        // Next character in units do not match?
         if (*num_end++ != *unit++)
           return res.fail((const __FlashStringHelper*)INVALID_UNIT, unit_start);
       }
+      // At the end of the message unit, but not the passed unit?
       if (*unit)
         return res.fail((const __FlashStringHelper*)INVALID_UNIT, unit_start);
     }

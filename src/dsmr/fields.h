@@ -85,7 +85,7 @@ struct FixedValue {
 // digits. To prevent inefficient floating point operations, we store
 // them as a fixed-point number: an integer that stores the value in
 // thousands. For example, a value of 1.234 kWh is stored as 1234. This
-// effectively means that the integer value is het value in Wh. To allow
+// effectively means that the integer value is the value in Wh. To allow
 // automatic printing of these values, both the original unit and the
 // integer unit is passed as a template argument.
 template <typename T, const char *_unit, const char *_int_unit>
@@ -179,13 +179,25 @@ const uint8_t WATER_MBUS_ID = 2;
 const uint8_t THERMAL_MBUS_ID = 3;
 const uint8_t SLAVE_MBUS_ID = 4;
 
+template <typename FieldT>
+struct NameConverter {
+  public:
+    operator const __FlashStringHelper*() const { return reinterpret_cast<const __FlashStringHelper*>(&FieldT::name_progmem); }
+};
+
 #define DEFINE_FIELD(fieldname, value_t, obis, field_t, field_args...) \
   struct fieldname : field_t<fieldname, ##field_args> { \
     value_t fieldname; \
     bool fieldname ## _present = false; \
     static constexpr ObisId id = obis; \
     static constexpr char name_progmem[] DSMR_PROGMEM = #fieldname; \
-    static constexpr const __FlashStringHelper *name = reinterpret_cast<const __FlashStringHelper*>(&name_progmem); \
+    /* name field is for compatibility with a __FlashStringHelper *name \
+     * field that was previously used, but no longer worked on newer gcc \
+     * versions. The get_name() method should be used instead. \
+     * TODO (breaking change): Remove name field, rename get_name() to \
+     * name() and add deprecated get_name() that calls name(). */ \
+    [[gnu::deprecated]] static constexpr NameConverter<dsmr::fields::fieldname> name = {}; \
+    static const __FlashStringHelper *get_name() { return reinterpret_cast<const __FlashStringHelper*>(&name_progmem); } \
     value_t& val() { return fieldname; } \
     bool& present() { return fieldname ## _present; } \
   }
