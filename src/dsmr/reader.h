@@ -145,7 +145,6 @@ class P1Reader {
         } else {
           // For other states, read bytes one by one
           int c = this->stream->read();
-          Serial1.printf("read %c", c);
           if (c < 0)
             return false;
 
