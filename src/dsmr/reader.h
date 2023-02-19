@@ -141,16 +141,11 @@ class P1Reader {
              this->disable();
 
             return true;
-          } else {
-        	  Serial1.print("\nCRC error ");
-        	  Serial1.println(crc.err);
-        	  Serial1.printf("expected %u\n", (unsigned int)this->crc);
-        	  Serial1.printf("actual %u\n", (unsigned int)crc.result);
           }
         } else {
           // For other states, read bytes one by one
           int c = this->stream->read();
-//          Serial1.printf("read %c in %d", (char)c, (int)this->state);
+          Serial1.printf("read %c", c);
           if (c < 0)
             return false;
 
@@ -164,8 +159,6 @@ class P1Reader {
                 // Include the / in the CRC
                 this->crc = _crc16_update(0, c);
                 this->clear();
-              } else {
-                  Serial1.printf("%c", (char)c);
               }
               break;
             case State::READING_STATE:
